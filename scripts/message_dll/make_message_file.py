@@ -11,12 +11,11 @@ SeverityNames=(Success=0x0:STATUS_SEVERITY_SUCCESS
 print(SEVERITY_NAMES)
 print("MessageIdTypedef=WORD")
 
-message_id = 1
+message_id = 0
 for severity in ('Success', 'Informational', 'Warning', 'Error'):
     for i in xrange(0, 256):
         print("MessageId=0x%x" % message_id)
         print("Language=English")
-        print("Severity=%s" % severity)
         message_id += 1
         print("%1")
         print(".")

@@ -1,5 +1,5 @@
-from ctypes import *
-from infi.registry import *
+from ctypes import c_wchar_p, WinError, windll
+from infi.registry import RegistryValueFactory, LocalComputer
 
 RegisterEventSourceW = windll.advapi32.RegisterEventSourceW
 DeregisterEventSource = windll.advapi32.DeregisterEventSource
@@ -33,17 +33,32 @@ def unregister_application(app_name):
     del event_log['Application'][app_name]
 
 def register_event_source(app_name):
+    """Registers an event source and returns an open handle. Raises WinError on error."""
     handle = RegisterEventSourceW(None, unicode(app_name))
     if handle == 0:
         raise WinError()
     return handle
 
 def deregister_event_source(handle):
+    """Closes an open event source handle."""
     DeregisterEventSource(handle)
 
 def report_event(handle, type, category, event_id, strings, raw_data):
+    """Reports an event to Windows event log. Raises WinError on error.
+    
+    handle - handle to an open event source, previously opened with register_event_source
+    type - event type: one of the EVENTLOG_xxxx constants
+    category - category to use (number). If using our resource DLL, leave this as 0.
+    event_id - event ID to use (number).
+    strings - a list of strings that will be formatted as the event message. IF using our resource DLL, only a single
+              string is supported.
+    raw_data - a blob (string)
+    """
+    # See http://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=VS.85%29.aspx
     raw_data_len = 0 if raw_data is None else len(raw_data)
     strings_ptr = (c_wchar_p * len(strings))()
     for i in xrange(len(strings)):
         strings_ptr[i] = c_wchar_p(unicode(strings[i]))
-    return ReportEventW(handle, type, category, event_id, None, len(strings), raw_data_len, strings_ptr, raw_data)
+    result = ReportEventW(handle, type, category, event_id, None, len(strings), raw_data_len, strings_ptr, raw_data)
+    if result != 1:
+        raise WinError()

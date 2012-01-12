@@ -1,29 +1,48 @@
+from contextlib import contextmanager
+
 from infi.unittest import TestCase
 from infi.logging.win32 import *
 
 class Win32TestCase(TestCase):
     def test_register_app(self):
-        try:
-            register_application("test_app", self._message_file_path())
-        finally:
-            unregister_application("test_app")
+        with self._register_application():
+            pass
 
     def test_register_event_source(self):
-        try:
-            register_application("test_app", self._message_file_path())
+        with self._register_application():
             handle = register_event_source("test_app")
             self.assertNotEqual(handle, 0)
-        finally:
-            unregister_application("test_app")
+            deregister_event_source(handle)
 
     def test_report_event(self):
+        with self._register_application_and_event_source() as handle:
+            report_event(handle, EVENTLOG_SUCCESS, 0, 0, [ "testing 123" ], None)
+
+    def test_report_event__two_strings(self):
+        with self._register_application_and_event_source() as handle:
+            report_event(handle, EVENTLOG_SUCCESS, 0, 0, [ "testing 123", "testing 321" ], None)
+
+    def test_report_event__raw_data(self):
+        with self._register_application_and_event_source() as handle:
+            report_event(handle, EVENTLOG_SUCCESS, 0, 0, [ "testing 123" ], "this is a raw data")
+
+    @contextmanager
+    def _register_application_and_event_source(self):
+        with self._register_application():
+            handle = None
+            try:
+                handle = register_event_source("test_app")
+                yield handle
+            finally:
+                if handle is not None:
+                    deregister_event_source(handle)
+
+    @contextmanager
+    def _register_application(self):
         try:
             register_application("test_app", self._message_file_path())
-            handle = register_event_source("test_app")
-            result = report_event(handle, EVENTLOG_SUCCESS, 0, 0, [ "testing 123" ], None)
-            print(result)
+            yield
         finally:
-            deregister_event_source(handle)
             unregister_application("test_app")
 
     def _message_file_path(self):
