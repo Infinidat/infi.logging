@@ -2,6 +2,7 @@ from contextlib import contextmanager
 
 from infi.unittest import TestCase
 from infi.logging.win32 import *
+from logbook import *
 
 class Win32TestCase(TestCase):
     def test_register_app(self):
@@ -25,6 +26,26 @@ class Win32TestCase(TestCase):
     def test_report_event__raw_data(self):
         with self._register_application_and_event_source() as handle:
             report_event(handle, EVENTLOG_SUCCESS, 0, 0, [ "testing 123" ], "this is a raw data")
+
+    def test_win32_handler(self):
+        with self._register_application():
+            with Win32EventLogHandler("test_app").applicationbound():
+                info("This is test_win32_handler")
+
+    def test_win32_handler__eventid(self):
+        with self._register_application():
+            with Win32EventLogHandler("test_app").applicationbound():
+                info("This is test_win32_handler__eventid id should be 1", eventid=1)
+
+    def test_win32_handler__eventcategory(self):
+        with self._register_application():
+            with Win32EventLogHandler("test_app").applicationbound():
+                info("This is test_win32_handler__eventcategory category should be 1", eventcategory=1)
+
+    def test_win32_handler__raw_data(self):
+        with self._register_application():
+            with Win32EventLogHandler("test_app").applicationbound():
+                info("This is test_win32_handler__raw_data should have raw data", raw_data="this is raw data")
 
     @contextmanager
     def _register_application_and_event_source(self):
