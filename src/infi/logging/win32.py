@@ -1,4 +1,6 @@
+from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
 from ctypes import c_wchar_p, WinError, windll
+
 from infi.registry import RegistryValueFactory, LocalComputer
 
 RegisterEventSourceW = windll.advapi32.RegisterEventSourceW
@@ -62,3 +64,55 @@ def report_event(handle, type, category, event_id, strings, raw_data):
     result = ReportEventW(handle, type, category, event_id, None, len(strings), raw_data_len, strings_ptr, raw_data)
     if result != 1:
         raise WinError()
+
+class Win32EventLogHandler(Handler, StringFormatterHandlerMixin):
+    def __init__(self, application_name, level=NOTSET, format_string=None, filter=None, bubble=False):
+        Handler.__init__(self, level, filter, bubble)
+        StringFormatterHandlerMixin.__init__(self, format_string)
+
+        self.application_name = application_name
+        self.default_type = EVENTLOG_INFORMATION_TYPE
+        self.type_map = {
+            DEBUG:      EVENTLOG_INFORMATION_TYPE,
+            INFO:       EVENTLOG_INFORMATION_TYPE,
+            NOTICE:     EVENTLOG_INFORMATION_TYPE,
+            WARNING:    EVENTLOG_WARNING_TYPE,
+            ERROR:      EVENTLOG_ERROR_TYPE,
+            CRITICAL:   EVENTLOG_ERROR_TYPE
+        }
+        self.handle = register_event_source(self.application_name)
+
+        def close(self):
+            if self.handle != 0:
+                deregister_event_source(self.handle)
+                self.handle = 0
+
+        def get_message_id(self, record):
+            id = record.extra.get('eventid', 0)
+            if id == 0:
+                id = record.kwargs.get('eventid', 0)
+                # TODO: warn on debug that we have no id for this event.
+            return id
+
+        def get_event_category(self, record):
+            category = record.extra.get('eventcategory', 0)
+            if category == 0:
+                category = record.kwargs.get('eventcategory', 0)
+            return category
+        
+        def get_event_type(self, record):
+            return self.type_map.get(record.level, self.default_type)
+
+        def get_raw_data(self, record):
+            raw_data = record.extra.get('raw_data', None)
+            if raw_data is None:
+                raw_data = record.kwargs.get('raw_data', None)
+            return raw_data
+
+        def emit(self, record):
+            id = self.get_message_id(record)
+            cat = self.get_event_category(record)
+            type = self.get_event_type(record)
+            message = self.format(record)
+            raw_data = self.get_raw_data(record)
+            report_event(self.handle, type, cat, id, message, raw_data)
