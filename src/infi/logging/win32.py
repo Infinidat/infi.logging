@@ -1,5 +1,4 @@
-#from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
-from logbook import *
+from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
 from ctypes import c_wchar_p, WinError, windll
 
 from infi.registry import RegistryValueFactory, LocalComputer
@@ -91,26 +90,30 @@ class Win32EventLogHandler(Handler, StringFormatterHandlerMixin):
             self._win32_handle = 0
 
     def get_message_id(self, record):
-        id = record.extra.get('eventid', 0)
-        if id == 0:
-            id = record.kwargs.get('eventid', 0)
-            # TODO: warn on debug that we have no id for this event.
-        return id
+        for dic in (record.extra, record.kwargs):
+            id = dic.get('eventid', 0)
+            if id != 0:
+                return id
+        
+        # TODO: warn on debug that we have no id for this event.
+        return 0
 
     def get_event_category(self, record):
-        category = record.extra.get('eventcategory', 0)
-        if category == 0:
-            category = record.kwargs.get('eventcategory', 0)
-        return category
+        for dic in (record.extra, record.kwargs):
+            category = dic.get('eventcategory', 0)
+            if category != 0:
+                return category
+        return 0
         
     def get_event_type(self, record):
         return self._type_map.get(record.level, self._default_type)
 
     def get_raw_data(self, record):
-        raw_data = record.extra.get('raw_data', None)
-        if raw_data is None:
-            raw_data = record.kwargs.get('raw_data', None)
-        return raw_data
+        for dic in (record.extra, record.kwargs):
+            raw_data = dic.get('raw_data', None)
+            if raw_data is not None:
+                return raw_data
+        return None
 
     def emit(self, record):
         id = self.get_message_id(record)
