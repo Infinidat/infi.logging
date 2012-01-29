@@ -67,9 +67,7 @@ class Win32TestCase(TestCase):
             unregister_application("test_app")
 
     def _message_file_path(self):
-        from os import path
         import sys
-
-        assets_dir = path.abspath(path.join(path.dirname(__file__), "..", "assets"))
-        arch = "amd64" if sys.maxsize > (1 << 31) else "x86"
-        return path.join(assets_dir, arch, "messages.dll")
+        from pkg_resources import resource_filename
+        fname = "eventlog_amd64.dll" if sys.maxsize > (1 << 31) else "eventlog_x86.dll"
+        return resource_filename("infi.logging", fname)
