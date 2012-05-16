@@ -37,10 +37,10 @@ if %errorlevel% neq 0 goto fail
 
 cd ..\..
 
-copy bin\x86\message_dll.dll ..\..\assets\x86\messages.dll
+copy bin\x86\message_dll.dll ..\..\src\infi\logging\eventlog_x86.dll
 if %errorlevel% neq 0 goto fail_copy
 
-copy bin\amd64\message_dll.dll ..\..\assets\amd64\messages.dll
+copy bin\amd64\message_dll.dll ..\..\src\infi\logging\eventlog_amd64.dll
 if %errorlevel% neq 0 goto fail_copy
 
 echo .
@@ -57,6 +57,6 @@ exit /b 1
 :fail_copy
 echo .
 echo .
-echo Failed to copy the DLL files into the assets directory, please check that it exists (..\..\assets\x86,amd64) and
+echo Failed to copy the DLL files into the src directory, please check that it exists (..\..\src\infi\logging) and
 echo that you don't have any process opened with these DLLs (event viewer, etc.)
 exit /b 2

@@ -15,13 +15,20 @@ EVENTLOG_ERROR_TYPE = 0x0001
 EVENTLOG_INFORMATION_TYPE = 0x0004 
 EVENTLOG_WARNING_TYPE = 0x0002 
 
-def register_application(app_name, message_file_path):
+def register_application(app_name, message_file_path=None):
     """Registers an application as an event log source so it can later create events.
     
     app_name - Application name (use the same name later when registering the event source)
     message_file_path - resource DLL file path
     """
     # See http://msdn.microsoft.com/en-us/library/windows/desktop/aa363661%28v=VS.85%29.aspx
+
+    if message_file_path is None:
+        import sys
+        from pkg_resources import resource_filename
+        fname = "eventlog_amd64.dll" if sys.maxsize > (1 << 31) else "eventlog_x86.dll"
+        message_file_path = resource_filename("infi.logging", fname)
+
     value_factory = RegistryValueFactory()
     event_log = LocalComputer().local_machine['SYSTEM']['CurrentControlSet']['Services']['Eventlog']
     event_log['Application'][app_name] = None
