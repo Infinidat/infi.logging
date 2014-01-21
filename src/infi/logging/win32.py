@@ -39,7 +39,7 @@ def register_application(app_name, message_file_path=None):
 def unregister_application(app_name):
     """Unregisters an application as a log source by removing it from the registry."""
     event_log = LocalComputer().local_machine['SYSTEM']['CurrentControlSet']['Services']['Eventlog']
-    del event_log['Application'][app_name]
+    event_log['Application'].pop(app_name, None)
 
 def register_event_source(app_name):
     """Registers an event source and returns an open handle. Raises WinError on error."""
