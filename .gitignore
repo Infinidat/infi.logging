@@ -33,3 +33,4 @@ src/infi/logging/__version__.py
 .bzr/
 .svn/
 .hg/
+bootstrap.py
