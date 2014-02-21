@@ -1,7 +1,7 @@
 Overview
 ========
 
-Extensions to logbook, such as Windows EventLog handler.
+Extensions for logbook, such as Windows EventLog handler.
 
 Checking out the code
 =====================
