@@ -34,3 +34,4 @@ src/infi/logging/__version__.py
 .svn/
 .hg/
 bootstrap.py
+.cache
