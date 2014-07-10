@@ -4,7 +4,7 @@ except:
     from unittest import SkipTest
     raise SkipTest("gevent not installed")
 
-from infi.unittest import TestCase
+from logging_test_case import LoggingTestCase
 from infi.logging.request_id_tag import get_tag, set_tag, request_id_tag, TAG_NAME
 
 
@@ -18,14 +18,9 @@ def return_tag_func_2():
     return return_tag_func()
 
 
-class RequestIDTagTestCase(TestCase):
-    def setUp(self):
-        from logbook import TestHandler
-        self.log_handler = TestHandler()
-        self.log_handler.push_application()
-
+class RequestIDTagTestCase(LoggingTestCase):
     def tearDown(self):
-        self.log_handler.pop_application()
+        super(RequestIDTagTestCase, self).tearDown()
         set_tag(None)
 
     def test_tag_accessors(self):
@@ -90,17 +85,3 @@ class RequestIDTagTestCase(TestCase):
             return get_tag()
 
         self.assertEquals(foo(), 'boo')
-
-    def assert_log_records_len(self, n):
-        self.assertEquals(len(self.log_handler.records), n)
-
-    def assert_any_log_record(self, pred):
-        self.assertTrue(any(pred(o) for o in self.log_handler.records),
-                        "any_log_record({!r}) is False, log records: {!r}".format(pred, self.dump_log_records()))
-
-    def assert_all_log_record(self, pred):
-        self.assertTrue(all(pred(o) for o in self.log_handler.records),
-                        "all_log_record({!r}) is False, log records: {!r}".format(pred, self.dump_log_records()))
-
-    def dump_log_records(self):
-        return [r.to_dict() for r in self.log_handler.records]
