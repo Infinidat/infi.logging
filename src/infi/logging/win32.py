@@ -8,18 +8,18 @@ DeregisterEventSource = windll.advapi32.DeregisterEventSource
 ReportEventW = windll.advapi32.ReportEventW
 
 # From http://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=VS.85%29.aspx
-EVENTLOG_SUCCESS = 0x0000 
-EVENTLOG_AUDIT_FAILURE = 0x0010 
-EVENTLOG_AUDIT_SUCCESS = 0x0008 
-EVENTLOG_ERROR_TYPE = 0x0001 
-EVENTLOG_INFORMATION_TYPE = 0x0004 
-EVENTLOG_WARNING_TYPE = 0x0002 
+EVENTLOG_SUCCESS = 0x0000
+EVENTLOG_AUDIT_FAILURE = 0x0010
+EVENTLOG_AUDIT_SUCCESS = 0x0008
+EVENTLOG_ERROR_TYPE = 0x0001
+EVENTLOG_INFORMATION_TYPE = 0x0004
+EVENTLOG_WARNING_TYPE = 0x0002
 
 def register_application(app_name, message_file_path=None):
     """Registers an application as an event log source so it can later create events.
-    
-    app_name - Application name (use the same name later when registering the event source)
-    message_file_path - resource DLL file path
+
+    :param app_name: Application name (use the same name later when registering the event source)
+    :param message_file_path: resource DLL file path
     """
     # See http://msdn.microsoft.com/en-us/library/windows/desktop/aa363661%28v=VS.85%29.aspx
 
@@ -54,14 +54,14 @@ def deregister_event_source(handle):
 
 def report_event(handle, type, category, event_id, strings, raw_data):
     """Reports an event to Windows event log. Raises WinError on error.
-    
-    handle - handle to an open event source, previously opened with register_event_source
-    type - event type: one of the EVENTLOG_xxxx constants
-    category - category to use (number). If using our resource DLL, leave this as 0.
-    event_id - event ID to use (number).
-    strings - a list of strings that will be formatted as the event message. IF using our resource DLL, only a single
-              string is supported.
-    raw_data - a blob (string)
+
+    :param handle: handle to an open event source, previously opened with register_event_source
+    :param type: event type: one of the EVENTLOG_xxxx constants
+    :param category: category to use (number). If using our resource DLL, leave this as 0.
+    :param event_id: event ID to use (number).
+    :param strings: a list of strings that will be formatted as the event message. IF using our resource DLL, only a single
+                    string is supported.
+    :param raw_data: a blob (string)
     """
     # See http://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=VS.85%29.aspx
     raw_data_len = 0 if raw_data is None else len(raw_data)
@@ -101,7 +101,7 @@ class Win32EventLogHandler(Handler, StringFormatterHandlerMixin):
             id = dic.get('eventid', 0)
             if id != 0:
                 return id
-        
+
         # TODO: warn on debug that we have no id for this event.
         return 0
 
@@ -111,7 +111,7 @@ class Win32EventLogHandler(Handler, StringFormatterHandlerMixin):
             if category != 0:
                 return category
         return 0
-        
+
     def get_event_type(self, record):
         return self._type_map.get(record.level, self._default_type)
 
