@@ -19,6 +19,10 @@ class LoggingTestCase(TestCase):
         self.assertTrue(any(pred(o) for o in self.log_handler.records),
                         "any_log_record({!r}) is False, log records: {!r}".format(pred, self.dump_log_records()))
 
+    def assert_no_log_record(self, pred):
+        self.assertFalse(any(pred(o) for o in self.log_handler.records),
+                         "no_log_record({!r}) is False, log records: {!r}".format(pred, self.dump_log_records()))
+
     def assert_all_log_record(self, pred):
         self.assertTrue(all(pred(o) for o in self.log_handler.records),
                         "all_log_record({!r}) is False, log records: {!r}".format(pred, self.dump_log_records()))

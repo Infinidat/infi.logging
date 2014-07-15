@@ -80,3 +80,40 @@ def log_timing(func=None, logger=None, log_level="DEBUG"):
         return decorate
     else:
         return decorate(func)
+
+
+try:
+    import gevent
+    import greenlet
+
+    _slow_greenlet_max_duration = 1.0
+    _last_switch_time = None
+
+    def _switch_time_tracer(what, (origin, target)):
+        global _slow_greenlet_max_duration, _last_switch_time, _time, _logger
+        now = _time()
+        if _last_switch_time and origin != gevent.get_hub():  # gevent.hub can block for as long as it wants
+            duration = now - _last_switch_time
+            if duration >= _slow_greenlet_max_duration:
+                msg = "greenlet id {} was running for at least {:.4f} seconds"
+                _logger.warn(msg.format(id(origin), duration))
+        _last_switch_time = now
+
+    def enable_slow_greenlet_log_warning(max_duration=1.0):
+        """
+        Enables warnings about slow greenlet written to the log
+        :param max_duration: maximum duration in seconds afterwhich a greenlet is considered slow
+        """
+        global _slow_greenlet_max_duration, _last_switch_time, _time, _logger
+        now = _time()
+        _slow_greenlet_max_duration = max_duration
+        _last_switch_time = now
+        current_id = id(gevent.getcurrent())
+        _logger.debug("enabling logging of greenlet switching, current greenlet (main) is {}".format(current_id))
+        greenlet.settrace(_switch_time_tracer)
+
+    def disable_slow_greenlet_log_warning():
+        """Disables the slow greenlet log warnings by removing the trace function from greenlet."""
+        greenlet.settrace(None)
+except ImportError:
+    pass  # no gevent
