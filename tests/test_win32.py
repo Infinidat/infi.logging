@@ -1,3 +1,10 @@
+try:
+    from ctypes import WinError
+except:
+    from unittest import SkipTest
+    raise SkipTest("test module for win32 only")
+
+
 from contextlib import contextmanager
 
 from infi.unittest import TestCase
