@@ -5,7 +5,7 @@ except:
     raise SkipTest("gevent not installed")
 
 from logging_test_case import LoggingTestCase
-from infi.logging.request_id_tag import get_tag, set_tag, request_id_tag, TAG_NAME
+from infi.logging.request_id_tag import get_tag, set_tag, request_id_tag, get_request_id_tag_from_record
 
 
 @request_id_tag
@@ -51,13 +51,13 @@ class RequestIDTagTestCase(LoggingTestCase):
         self.assertIsNotNone(tag)
 
         self.assert_log_records_len(1)
-        self.assert_any_log_record(lambda r: r.extra.get(TAG_NAME, None) == tag)
+        self.assert_any_log_record(lambda r: get_request_id_tag_from_record(r) == tag)
 
     def test_request_id_tag__log_only_first_tag_ctx(self):
         tag = return_tag_func_2()
 
         self.assert_log_records_len(1)
-        self.assert_any_log_record(lambda r: r.extra.get(TAG_NAME, None) == tag and 'return_tag_func_2' in r.msg)
+        self.assert_any_log_record(lambda r: get_request_id_tag_from_record(r) == tag and 'return_tag_func_2' in r.msg)
 
     def test_request_id_tag__context_switch_new_tag(self):
         set_tag('boo')
@@ -67,7 +67,7 @@ class RequestIDTagTestCase(LoggingTestCase):
         self.assertNotEquals(tag, 'boo')
 
         self.assert_log_records_len(1)
-        self.assert_any_log_record(lambda r: r.extra.get(TAG_NAME, None) == tag and 'return_tag_func_2' in r.msg)
+        self.assert_any_log_record(lambda r: get_request_id_tag_from_record(r) == tag and 'return_tag_func_2' in r.msg)
 
     def test_request_id_tag__context_switch_set_tag(self):
         set_tag('boo')
@@ -77,7 +77,7 @@ class RequestIDTagTestCase(LoggingTestCase):
         g.join()
         self.assertEquals(g.value, 'boo2')
         self.assert_log_records_len(1)
-        self.assert_any_log_record(lambda r: r.extra.get(TAG_NAME, None) == 'boo2' and 'foo' in r.msg)
+        self.assert_any_log_record(lambda r: get_request_id_tag_from_record(r) == 'boo2' and 'foo' in r.msg)
 
     def test_decorate_tag_with_default(self):
         @request_id_tag(tag='boo')

@@ -1,12 +1,8 @@
-__all__ = ['RotatingFileHandler']
+from infi.logging.dependencies import has_infi_tracing
 from .rotating_file_handler import RotatingFileHandler
 
-try:
-    import infi.tracing
-    _has_infi_tracing = True
-except ImportError:
-    _has_infi_tracing = False
+__all__ = ['RotatingFileHandler']
 
-if _has_infi_tracing:
-    __all__ += ['SyslogHandler']
+if has_infi_tracing:
     from .syslog_handler import SyslogHandler
+    __all__.append('SyslogHandler')

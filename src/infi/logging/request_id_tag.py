@@ -1,17 +1,27 @@
 """
-Greenlet-friendly request ID tagging for log messages.
+Greenlet/thread-friendly request ID tagging for log messages.
 """
 import logbook
-import gevent
 import random
 from infi.pyutils.decorators import wraps
 from infi.pyutils.contexts import contextmanager
+from .dependencies import should_use_gevent, get_logger
 
 
-TAG_NAME = 'request_id'
+REQUEST_ID_TAG_KEY = 'request_id'
+_threadlocal = None
 
-_threadlocal = gevent.local.local()
-_logger = logbook.Logger(__name__)
+
+def _get_threadlocal():
+    global _threadlocal
+    if _threadlocal is None:  # Lazy creation of threadlocal
+        if should_use_gevent():
+            import gevent
+            _threadlocal = gevent.local.local()
+        else:
+            import threading
+            _threadlocal = threading.local()
+    return _threadlocal
 
 
 def get_tag():
@@ -19,8 +29,7 @@ def get_tag():
     :returns: current request ID tag for the current greenlet if exists or None if no request ID tag is set
     :rtype: str or None
     """
-    global _threadlocal
-    return getattr(_threadlocal, TAG_NAME, None)
+    return getattr(_get_threadlocal(), REQUEST_ID_TAG_KEY, None)
 
 
 def set_tag(tag):
@@ -29,8 +38,7 @@ def set_tag(tag):
     :param tag: tag string for the current request
     :type tag: str or None to clear the tag
     """
-    global _threadlocal
-    setattr(_threadlocal, TAG_NAME, tag)
+    setattr(_get_threadlocal(), REQUEST_ID_TAG_KEY, tag)
 
 
 def new_random_tag():
@@ -48,11 +56,19 @@ def set_random_tag():
     set_tag(new_random_tag())
 
 
+def get_request_id_tag_from_record(record):
+    """
+    :returns: request ID tag set on the logbook record or None if not found
+    :rtype: str or None
+    """
+    return record.extra.get(REQUEST_ID_TAG_KEY, '')
+
+
 def _inject_request_id_tag(record):
-    """Logbook processor function that sets TAG_NAME attribute on the log record to the current tag (or None)"""
+    """Logbook processor function that sets REQUEST_ID_TAG_KEY attribute on the log record to the current tag (or None)"""
     tag = get_tag()
     if tag is not None:
-        record.extra[TAG_NAME] = tag
+        record.extra[REQUEST_ID_TAG_KEY] = tag
 
 
 @contextmanager
@@ -60,7 +76,39 @@ def _null_context():
     yield
 
 
-def request_id_tag(func=None, tag=None):
+@contextmanager
+def request_id_tag_context(title, tag=None, logger=None):
+    """
+    Context that adds a request ID tag logging processor.
+
+    :param title: title to write in the log when setting a new tag
+    :param tag: tag to set before calling func. If tag is None and no existing tag is set a new random tag will be
+                created.
+    :param logger: logger to use, if None use default logger
+    """
+    if logger is None:
+        logger = get_logger()
+
+    prev_tag, new_tag = get_tag(), tag
+    if new_tag is not None:
+        set_tag(new_tag)
+    elif prev_tag is None:
+        new_tag = new_random_tag()
+        set_tag(new_tag)
+
+    # We create a logbook.Processor context only if we didn't have a previous tag, otherwise there must already
+    # be a context in place somewhere down the call stack.
+    with (logbook.Processor(_inject_request_id_tag).threadbound() if prev_tag is None else _null_context()):
+        if prev_tag is None:
+            # Log this function since it's our first "tagged" entry to the greenlet
+            logger.debug("setting new tag {} on greenlet {}".format(new_tag, title))
+        try:
+            yield
+        finally:
+            set_tag(prev_tag)
+
+
+def request_id_tag(func=None, tag=None, logger=None):
     """
     Decorator that wraps func and adds a request ID tag logging processor that adds the request ID attribute to log
     records within the same greenlet.
@@ -82,29 +130,14 @@ def request_id_tag(func=None, tag=None):
     :param func: function to wrap
     :param tag: tag to set before calling func. If tag is None and no existing tag is set a new random tag will be
                 created.
+    :param logger: logger to use, if None use default logger
     :returns: wrapped function
     """
     def decorate(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            prev_tag, new_tag = get_tag(), tag
-            if new_tag is not None:
-                set_tag(new_tag)
-            elif prev_tag is None:
-                new_tag = new_random_tag()
-                set_tag(new_tag)
-
-            # We create a logbook.Processor context only if we didn't have a previous tag, otherwise there must already
-            # be a context in place somewhere down the call stack.
-            with (logbook.Processor(_inject_request_id_tag).threadbound() if prev_tag is None else _null_context()):
-                if prev_tag is None:
-                    # Log this function since it's our first "tagged" entry to the greenlet
-                    _logger.debug("setting new tag {} on greenlet {}".format(new_tag, f.__name__))
-                try:
-                    return f(*args, **kwargs)
-                finally:
-                    set_tag(prev_tag)
-
+            with request_id_tag_context(f.__name__, tag, logger):
+                return f(*args, **kwargs)
         return wrapped
 
     if func is None:

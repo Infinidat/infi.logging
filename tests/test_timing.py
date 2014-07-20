@@ -1,6 +1,7 @@
 import gevent
 from logging_test_case import LoggingTestCase
-from infi.logging.timing import (set_time_func, log_timing_context, log_timing, enable_slow_greenlet_log_warning,
+from infi.logging.dependencies import set_time_func
+from infi.logging.timing import (log_timing_context, log_timing, enable_slow_greenlet_log_warning,
                                  disable_slow_greenlet_log_warning)
 
 
