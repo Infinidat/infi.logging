@@ -1,4 +1,13 @@
-from infi.logging.dependencies import has_setproctitle
+from infi.logging.plugins import InjectorPlugin, FormatterPlugin
+
+try:
+    import setproctitle
+
+    def get_proc_title():
+        return setproctitle.getproctitle()
+except ImportError:
+    def get_proc_title():
+        return None
 
 
 PROCNAME_KEY = 'procname'
@@ -34,12 +43,7 @@ def refresh_procname_if_none(force=False):
     """
     global _procname
     if _procname is None or force:
-        if not has_setproctitle:
-            raise ValueError("Cannot refresh procname since setproctitle package is not found. " +
-                             "Either call set_procname() to manually set it or install setproctitle.")
-        else:
-            import setproctitle
-            _procname = setproctitle.getproctitle()
+        _procname = get_proc_title()
 
 
 def inject_procname(record):
@@ -56,3 +60,19 @@ def get_procname_from_record(record):
     :returns: current process name retrieved from the logbook record
     """
     return record.extra.get(PROCNAME_KEY, '')
+
+
+class ProcnameInjectorPlugin(InjectorPlugin):
+    def inject(self, record):
+        return inject_procname(record)
+
+
+class ProcnameFormatterPlugin(FormatterPlugin):
+    def get_value(self, record):
+        return get_procname_from_record(record)
+
+    def get_format_string(self):
+        return "{: <28}"
+
+    def get_format_key(self):
+        return "procname"

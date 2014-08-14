@@ -5,7 +5,7 @@ except:
     raise SkipTest("gevent not installed")
 
 from logging_test_case import LoggingTestCase
-from infi.logging.request_id_tag import get_tag, set_tag, request_id_tag, get_request_id_tag_from_record
+from infi.logging.plugins.request_id_tag import get_tag, set_tag, request_id_tag, get_request_id_tag_from_record
 
 
 @request_id_tag
@@ -32,6 +32,7 @@ class RequestIDTagTestCase(LoggingTestCase):
 
         # Make sure the tag is greenlet-local:
         set_tag("hello")
+
         def new_greenlet():
             self.assertEquals(None, get_tag())
         g = gevent.spawn(new_greenlet)
@@ -39,7 +40,7 @@ class RequestIDTagTestCase(LoggingTestCase):
         self.assertEquals("hello", get_tag())
 
     def test_random_tag(self):
-        from infi.logging.request_id_tag import new_random_tag
+        from infi.logging.plugins.request_id_tag import new_random_tag
         t1, t2 = new_random_tag(), new_random_tag()
         self.assertNotEquals(t1, t2)
         self.assertTrue(len(t1) > 0 and len(t2) > 0)
@@ -71,6 +72,7 @@ class RequestIDTagTestCase(LoggingTestCase):
 
     def test_request_id_tag__context_switch_set_tag(self):
         set_tag('boo')
+
         def foo():
             return return_tag_func()
         g = gevent.spawn(request_id_tag(foo, tag='boo2'))

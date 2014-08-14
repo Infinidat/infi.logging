@@ -31,6 +31,8 @@ SETUP_INFO = dict(
     entry_points = dict(
         console_scripts = ${project:console_scripts},
         gui_scripts = ${project:gui_scripts},
+        infi_logging_formatter_plugins = ${project:infi_logging_formatter_plugins},
+        infi_logging_injector_plugins = ${project:infi_logging_injector_plugins}
         ),
 )
 

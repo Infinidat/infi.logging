@@ -5,7 +5,9 @@ import logbook
 import random
 from infi.pyutils.decorators import wraps
 from infi.pyutils.contexts import contextmanager
-from .dependencies import should_use_gevent, get_logger
+
+from infi.logging.plugins import InjectorPlugin, FormatterPlugin
+from infi.logging.globals import new_threadlocal, get_logger
 
 
 REQUEST_ID_TAG_KEY = 'request_id'
@@ -14,13 +16,8 @@ _threadlocal = None
 
 def _get_threadlocal():
     global _threadlocal
-    if _threadlocal is None:  # Lazy creation of threadlocal
-        if should_use_gevent():
-            import gevent
-            _threadlocal = gevent.local.local()
-        else:
-            import threading
-            _threadlocal = threading.local()
+    if _threadlocal is None:  # Lazy creation of threadlocal so user can configure which threadlocal to use
+        _threadlocal = new_threadlocal()
     return _threadlocal
 
 
@@ -64,7 +61,7 @@ def get_request_id_tag_from_record(record):
     return record.extra.get(REQUEST_ID_TAG_KEY, '')
 
 
-def _inject_request_id_tag(record):
+def inject_request_id_tag(record):
     """Logbook processor function that sets REQUEST_ID_TAG_KEY attribute on the log record to the current tag (or None)"""
     tag = get_tag()
     if tag is not None:
@@ -98,7 +95,7 @@ def request_id_tag_context(title, tag=None, logger=None):
 
     # We create a logbook.Processor context only if we didn't have a previous tag, otherwise there must already
     # be a context in place somewhere down the call stack.
-    with (logbook.Processor(_inject_request_id_tag).threadbound() if prev_tag is None else _null_context()):
+    with (logbook.Processor(inject_request_id_tag).threadbound() if prev_tag is None else _null_context()):
         if prev_tag is None:
             # Log this function since it's our first "tagged" entry to the greenlet
             logger.debug("setting new tag {} on greenlet {}".format(new_tag, title))
@@ -144,3 +141,19 @@ def request_id_tag(func=None, tag=None, logger=None):
         return decorate
     else:
         return decorate(func)
+
+
+class RequestIDTagInjectorPlugin(InjectorPlugin):
+    def inject(self, record):
+        return inject_request_id_tag(record)
+
+
+class RequestIDTagFormatterPlugin(FormatterPlugin):
+    def get_value(self, record):
+        return get_request_id_tag_from_record(record)
+
+    def get_format_string(self):
+        return "{:0>8}"
+
+    def get_format_key(self):
+        return "request_id_tag"
