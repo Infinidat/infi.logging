@@ -74,11 +74,12 @@ def _null_context():
 
 
 @contextmanager
-def request_id_tag_context(title, tag=None, logger=None):
+def request_id_tag_context(title=None, tag=None, logger=None):
     """
     Context that adds a request ID tag logging processor.
 
-    :param title: title to write in the log when setting a new tag
+    :param title: title to write in the log when setting a new tag (if a previous tag was not set).
+                  If ``None`` no log message will be generated.
     :param tag: tag to set before calling func. If tag is None and no existing tag is set a new random tag will be
                 created.
     :param logger: logger to use, if None use default logger
@@ -96,7 +97,7 @@ def request_id_tag_context(title, tag=None, logger=None):
     # We create a logbook.Processor context only if we didn't have a previous tag, otherwise there must already
     # be a context in place somewhere down the call stack.
     with (logbook.Processor(inject_request_id_tag).threadbound() if prev_tag is None else _null_context()):
-        if prev_tag is None:
+        if prev_tag is None and title is not None:
             # Log this function since it's our first "tagged" entry to the greenlet
             logger.debug("setting new tag {} on greenlet {}".format(new_tag, title))
         try:
