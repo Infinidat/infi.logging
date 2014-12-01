@@ -76,6 +76,8 @@ def script_logging_context(syslog=_has_syslog_handler, syslog_facility=logbook.S
     """
     Context manager that creates a setup of logbook handlers based on the parameters received and sensible defaults.
     """
+    from logbook.concurrency import enable_gevent
+    enable_gevent()
     redirect_python_logging_to_logbook()
 
     processor = create_processor()
