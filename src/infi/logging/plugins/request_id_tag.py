@@ -96,7 +96,7 @@ def request_id_tag_context(title=None, tag=None, logger=None):
 
     # We create a logbook.Processor context only if we didn't have a previous tag, otherwise there must already
     # be a context in place somewhere down the call stack.
-    with (logbook.Processor(inject_request_id_tag).threadbound() if prev_tag is None else _null_context()):
+    with (logbook.Processor(inject_request_id_tag).greenletbound() if prev_tag is None else _null_context()):
         if prev_tag is None and title is not None:
             # Log this function since it's our first "tagged" entry to the greenlet
             logger.debug("setting new tag {} on greenlet {}".format(new_tag, title))
