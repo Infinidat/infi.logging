@@ -106,7 +106,7 @@ def script_logging_decorator(func=None, *args, **kwargs):
         @wraps(f)
         def decorator(*args, **kwargs):
             with script_logging_context():
-                return func(*args, **kwargs)
+                return f(*args, **kwargs)
         return decorator
     if func is None:
         return decorate
