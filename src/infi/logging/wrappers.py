@@ -82,7 +82,7 @@ def script_logging_context(syslog=_has_syslog_handler, syslog_facility=logbook.S
 
     processor = create_processor()
     flags = logbook.Flags(errors='silent')
-    handlers = [logbook.NullHandler(bubble=False)]
+    handlers = [logbook.NullHandler()]
 
     if syslog:
         handlers.append(create_syslog_handler(facility=syslog_facility, buffer_size=syslog_buffer_size,
