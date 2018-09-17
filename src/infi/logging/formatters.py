@@ -47,7 +47,7 @@ def create_default_formatter(plugin_predicate=_true):
     :param plugin_predicate: predicate over plugin names to choose which plugins to use.
     :returns: formatter function
     """
-    available_formatters = dict((k, v()) for k, v in get_formatter_plugins(plugin_predicate).iteritems())
+    available_formatters = dict((k, v()) for k, v in get_formatter_plugins(plugin_predicate).items())
 
     strformats = []
     getters = []

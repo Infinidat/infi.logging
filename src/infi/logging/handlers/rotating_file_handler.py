@@ -8,7 +8,7 @@ class RotatingFileHandler(logbook.RotatingFileHandler):
     def perform_rollover(self):
         # Code here is almost the same as the base class's perform_rollover except for the src and dst formatting.
         self.stream.close()
-        for x in xrange(self.backup_count - 1, 0, -1):
+        for x in range(self.backup_count - 1, 0, -1):
             src = '{}.{:02}'.format(self._filename, x)
             dst = '{}.{:02}'.format(self._filename, x + 1)
             try:

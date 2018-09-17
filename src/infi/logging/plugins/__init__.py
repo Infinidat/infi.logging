@@ -55,12 +55,12 @@ def load_injector_plugins(predicate=_true, strict=False):
 
 def get_injector_plugins(predicate=_true):
     plugins = load_injector_plugins()
-    return dict((k, v) for k, v in plugins.iteritems() if predicate(k))
+    return dict((k, v) for k, v in plugins.items() if predicate(k))
 
 
 def get_formatter_plugins(predicate=_true):
     plugins = load_formatter_plugins()
-    return dict((k, v) for k, v in plugins.iteritems() if predicate(k))
+    return dict((k, v) for k, v in plugins.items() if predicate(k))
 
 
 def clear_formatter_plugins():

@@ -11,7 +11,12 @@ _slow_greenlet_max_duration = 1.0
 _last_switch_time = None
 
 
-def _switch_time_tracer(logger, what, (origin, target)):
+def _switch_time_tracer(logger, event, args):
+    if event not in ('switch', 'throw'):
+        # from greenlet docs: "For compatibility it is very important to unpack args tuple only when event is either
+        # 'switch' or 'throw' and not when event is potentially something else.
+        return
+    (origin, target) = args
     global _slow_greenlet_max_duration, _last_switch_time
     now = get_time()
     if _last_switch_time and origin != gevent.get_hub():  # gevent.hub can block for as long as it wants

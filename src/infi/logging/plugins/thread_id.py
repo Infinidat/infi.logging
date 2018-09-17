@@ -1,5 +1,8 @@
 from infi.logging.plugins import InjectorPlugin, FormatterPlugin
-from thread import get_ident
+try:
+    from threading import get_ident
+except ImportError:     # Python 2.x
+    from thread import get_ident
 
 THREAD_ID_KEY = 'thread_id'
 THREAD_ID_MODULU = 32768

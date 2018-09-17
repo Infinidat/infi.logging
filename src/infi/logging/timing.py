@@ -49,7 +49,7 @@ def log_timing(func=None, logger=None, log_level="DEBUG"):
     def decorate(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            with log_timing_context("function {!r}".format(f.func_name), logger=logger, log_level=log_level):
+            with log_timing_context("function {!r}".format(f.__name__), logger=logger, log_level=log_level):
                 return f(*args, **kwargs)
         return wrapped
     if func is None:

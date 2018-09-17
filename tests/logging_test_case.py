@@ -13,7 +13,7 @@ class LoggingTestCase(TestCase):
         self.log_handler.pop_application()
 
     def assert_log_records_len(self, n):
-        self.assertEquals(len(self.log_handler.records), n)
+        self.assertEqual(len(self.log_handler.records), n)
 
     def assert_any_log_record(self, pred):
         self.assertTrue(any(pred(o) for o in self.log_handler.records),
