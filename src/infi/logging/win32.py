@@ -1,3 +1,4 @@
+import six
 from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
 from ctypes import c_wchar_p, WinError, windll
 
