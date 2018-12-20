@@ -1,3 +1,4 @@
+import six
 from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
 from ctypes import c_wchar_p, WinError, windll
 
@@ -46,7 +47,7 @@ def unregister_application(app_name):
 
 def register_event_source(app_name):
     """Registers an event source and returns an open handle. Raises WinError on error."""
-    handle = RegisterEventSourceW(None, unicode(app_name))
+    handle = RegisterEventSourceW(None, six.text_type(app_name))
     if handle == 0:
         raise WinError()
     return handle
@@ -71,8 +72,8 @@ def report_event(handle, type, category, event_id, strings, raw_data):
     # See http://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=VS.85%29.aspx
     raw_data_len = 0 if raw_data is None else len(raw_data)
     strings_ptr = (c_wchar_p * len(strings))()
-    for i in xrange(len(strings)):
-        strings_ptr[i] = c_wchar_p(unicode(strings[i]))
+    for i in range(len(strings)):
+        strings_ptr[i] = c_wchar_p(six.text_type(strings[i]))
     result = ReportEventW(handle, type, category, event_id, None, len(strings), raw_data_len, strings_ptr, raw_data)
     if result != 1:
         raise WinError()

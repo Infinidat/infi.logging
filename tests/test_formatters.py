@@ -59,7 +59,7 @@ class CreateDefaultFormatterTestCase(TestCase):
         enabled_plugins = set(('process_id', 'thread_id', 'request_id_tag', 'channel', 'log_level', 'message'))
         fields = self._default_format_and_split(RecordBuilder().fill().create(),
                                                 plugin_predicate=enabled_plugins.__contains__)
-        self.assertEquals(fields, ['pid=00042', 'tid=00001', 'tag=0000ffff', 'module=mychannel', 'level=DEBUG', 'msg=mymessage'])
+        self.assertEqual(fields, ['pid=00042', 'tid=00001', 'tag=0000ffff', 'module=mychannel', 'level=DEBUG', 'msg=mymessage'])
 
     def test_default_with_gid(self):
         try:
@@ -69,13 +69,13 @@ class CreateDefaultFormatterTestCase(TestCase):
         enabled_plugins = set(('thread_id', 'greenlet_id'))
         fields = self._default_format_and_split(RecordBuilder().fill().create(),
                                                 plugin_predicate=enabled_plugins.__contains__)
-        self.assertEquals(fields[0], 'tid=00001:00001')
+        self.assertEqual(fields[0], 'tid=00001:00001')
 
     def test_default_with_procname(self):
         enabled_plugins = set(('process_id', 'procname'))
         fields = self._default_format_and_split(RecordBuilder().fill().create(),
                                                 plugin_predicate=enabled_plugins.__contains__)
-        self.assertEquals(fields[0], 'pid=00042:myproc')
+        self.assertEqual(fields[0], 'pid=00042:myproc')
 
     def _default_format_and_split(self, record, plugin_predicate=lambda p: True):
         return self._format_record_and_split(create_default_formatter(plugin_predicate), record)
@@ -89,16 +89,16 @@ class CreateFormatterTestCase(TestCase):
     def test_pid(self):
         formatter = create_formatter(['process_id'])
         record = RecordBuilder().fill().create()
-        self.assertEquals(formatter(record, None), "process_id=00042")
+        self.assertEqual(formatter(record, None), "process_id=00042")
 
     def test_pid_pname(self):
         formatter = create_formatter(['process_id', 'procname'])
         record = RecordBuilder().fill().create()
-        self.assertEquals(formatter(record, None).strip(), "process_id=00042 procname=myproc")
+        self.assertEqual(formatter(record, None).strip(), "process_id=00042 procname=myproc")
 
 
 class CreateFormatterByFormatStringTestCase(TestCase):
     def test_pid(self):
         formatter = create_formatter_by_format_string("myprocess={}", ['process_id'])
         record = RecordBuilder().fill().create()
-        self.assertEquals(formatter(record, None), "myprocess=42")
+        self.assertEqual(formatter(record, None), "myprocess=42")

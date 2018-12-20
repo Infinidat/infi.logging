@@ -25,28 +25,28 @@ class RequestIDTagTestCase(LoggingTestCase):
 
     def test_tag_accessors(self):
         set_tag('hello')
-        self.assertEquals('hello', get_tag())
+        self.assertEqual('hello', get_tag())
 
         set_tag(None)
-        self.assertEquals(None, get_tag())
+        self.assertEqual(None, get_tag())
 
         # Make sure the tag is greenlet-local:
         set_tag("hello")
 
         def new_greenlet():
-            self.assertEquals(None, get_tag())
+            self.assertEqual(None, get_tag())
         g = gevent.spawn(new_greenlet)
         g.join()
-        self.assertEquals("hello", get_tag())
+        self.assertEqual("hello", get_tag())
 
     def test_random_tag(self):
         from infi.logging.plugins.request_id_tag import new_random_tag
         t1, t2 = new_random_tag(), new_random_tag()
-        self.assertNotEquals(t1, t2)
+        self.assertNotEqual(t1, t2)
         self.assertTrue(len(t1) > 0 and len(t2) > 0)
 
     def test_request_id_tag__new_processor(self):
-        self.assertEquals(get_tag(), None)
+        self.assertEqual(get_tag(), None)
 
         tag = return_tag_func()
         self.assertIsNotNone(tag)
@@ -65,7 +65,7 @@ class RequestIDTagTestCase(LoggingTestCase):
         g = gevent.spawn(return_tag_func_2)
         g.join()
         tag = g.value
-        self.assertNotEquals(tag, 'boo')
+        self.assertNotEqual(tag, 'boo')
 
         self.assert_log_records_len(1)
         self.assert_any_log_record(lambda r: get_request_id_tag_from_record(r) == tag and 'return_tag_func_2' in r.msg)
@@ -77,7 +77,7 @@ class RequestIDTagTestCase(LoggingTestCase):
             return return_tag_func()
         g = gevent.spawn(request_id_tag(foo, tag='boo2'))
         g.join()
-        self.assertEquals(g.value, 'boo2')
+        self.assertEqual(g.value, 'boo2')
         self.assert_log_records_len(1)
         self.assert_any_log_record(lambda r: get_request_id_tag_from_record(r) == 'boo2' and 'foo' in r.msg)
 
@@ -86,4 +86,4 @@ class RequestIDTagTestCase(LoggingTestCase):
         def foo():
             return get_tag()
 
-        self.assertEquals(foo(), 'boo')
+        self.assertEqual(foo(), 'boo')

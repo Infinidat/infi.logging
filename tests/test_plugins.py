@@ -8,17 +8,17 @@ class PluginsTestCase(LoggingTestCase):
         clear_plugins()
 
     def test_load_formatter_plugins__default_plugins_no_predicate(self):
-        plugins = load_formatter_plugins().keys()
-        self.assertTrue(set(('message', 'log_level', 'channel', 'process_id', 'thread_id')) & set(plugins))
+        plugins = set(load_formatter_plugins().keys())
+        self.assertTrue(set(('message', 'log_level', 'channel', 'process_id', 'thread_id')) & plugins)
 
     def test_load_formatter_plugins__predicate(self):
-        plugins = load_formatter_plugins(lambda p: p != 'log_level').keys()
+        plugins = list(load_formatter_plugins(lambda p: p != 'log_level').keys())
         self.assertNotIn('log_level', plugins)
 
     def test_load_injector_plugins__default_plugins_no_predicate(self):
-        plugins = load_injector_plugins().keys()
+        plugins = list(load_injector_plugins().keys())
         self.assertIn('thread_id', plugins)
 
     def test_load_injector_plugins__predicate(self):
-        plugins = load_injector_plugins(lambda p: p != 'thread_id').keys()
+        plugins = list(load_injector_plugins(lambda p: p != 'thread_id').keys())
         self.assertNotIn('thread_id', plugins)
