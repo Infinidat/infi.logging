@@ -1,12 +1,33 @@
 import six
 from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
-from ctypes import c_wchar_p, WinError, windll
+import ctypes
+from ctypes import c_wchar_p, WinError, windll, wintypes
 
 from infi.registry import RegistryValueFactory, LocalComputer
 
+
+class SID_IDENTIFIER_AUTHORITY(ctypes.Structure):
+    _fields_ = [("Value0", wintypes.BYTE), ("Value1", wintypes.BYTE), ("Value2", wintypes.BYTE),
+                ("Value3", wintypes.BYTE), ("Value4", wintypes.BYTE), ("Value5", wintypes.BYTE)]
+
+
+class SID(ctypes.Structure):
+    _fields_ = [("Revision", wintypes.BYTE), ("SubAuthorityCount", wintypes.BYTE),
+                ("IdentifierAuthority", SID_IDENTIFIER_AUTHORITY), ("SubAuthority", wintypes.POINTER(wintypes.DWORD))]
+
+
 RegisterEventSourceW = windll.advapi32.RegisterEventSourceW
+RegisterEventSourceW.argtypes = (wintypes.LPCWSTR, wintypes.LPCWSTR)
+RegisterEventSourceW.restype = wintypes.HANDLE
+
 DeregisterEventSource = windll.advapi32.DeregisterEventSource
+DeregisterEventSource.argtypes = (wintypes.HANDLE, )
+DeregisterEventSource.restype = wintypes.BOOL
+
 ReportEventW = windll.advapi32.ReportEventW
+ReportEventW.argtypes = (wintypes.HANDLE, wintypes.WORD, wintypes.WORD, wintypes.DWORD, wintypes.POINTER(SID),
+                         wintypes.WORD, wintypes.DWORD, wintypes.POINTER(wintypes.LPCWSTR), wintypes.LPVOID)
+ReportEventW.restype = wintypes.BOOL
 
 # From http://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=VS.85%29.aspx
 EVENTLOG_SUCCESS = 0x0000
@@ -47,7 +68,7 @@ def unregister_application(app_name):
 
 def register_event_source(app_name):
     """Registers an event source and returns an open handle. Raises WinError on error."""
-    handle = RegisterEventSourceW(None, six.text_type(app_name))
+    handle = RegisterEventSourceW(None, wintypes.LPWSTR(app_name))
     if handle == 0:
         raise WinError()
     return handle
