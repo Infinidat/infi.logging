@@ -1,18 +1,8 @@
 import six
 from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
-from ctypes import c_wchar_p, WinError, windll, wintypes POINTER, Structure
+from ctypes import WinError, windll, wintypes, POINTER
 
 from infi.registry import RegistryValueFactory, LocalComputer
-
-
-class SID_IDENTIFIER_AUTHORITY(Structure):
-    _fields_ = [("byte0", wintypes.BYTE), ("byte1", wintypes.BYTE), ("byte2", wintypes.BYTE),
-                ("byte3", wintypes.BYTE), ("byte4", wintypes.BYTE), ("byte5", wintypes.BYTE)]
-
-
-class SID(Structure):
-    _fields_ = [("Revision", wintypes.BYTE), ("SubAuthorityCount", wintypes.BYTE),
-                ("IdentifierAuthority", SID_IDENTIFIER_AUTHORITY), ("SubAuthority", POINTER(wintypes.DWORD))]
 
 
 RegisterEventSourceW = windll.advapi32.RegisterEventSourceW
@@ -24,7 +14,7 @@ DeregisterEventSource.argtypes = (wintypes.HANDLE, )
 DeregisterEventSource.restype = wintypes.BOOL
 
 ReportEventW = windll.advapi32.ReportEventW
-ReportEventW.argtypes = (wintypes.HANDLE, wintypes.WORD, wintypes.WORD, wintypes.DWORD, POINTER(SID),
+ReportEventW.argtypes = (wintypes.HANDLE, wintypes.WORD, wintypes.WORD, wintypes.DWORD, wintypes.LPVOID,
                          wintypes.WORD, wintypes.DWORD, POINTER(wintypes.LPCWSTR), wintypes.LPVOID)
 ReportEventW.restype = wintypes.BOOL
 
@@ -68,7 +58,7 @@ def unregister_application(app_name):
 def register_event_source(app_name):
     """Registers an event source and returns an open handle. Raises WinError on error."""
     handle = RegisterEventSourceW(None, wintypes.LPWSTR(app_name))
-    if handle == 0:
+    if handle is None:
         raise WinError()
     return handle
 
@@ -91,9 +81,9 @@ def report_event(handle, type, category, event_id, strings, raw_data):
     """
     # See http://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=VS.85%29.aspx
     raw_data_len = 0 if raw_data is None else len(raw_data)
-    strings_ptr = (c_wchar_p * len(strings))()
+    strings_ptr = (wintypes.LPWSTR * len(strings))()
     for i in range(len(strings)):
-        strings_ptr[i] = c_wchar_p(six.text_type(strings[i]))
+        strings_ptr[i] = wintypes.LPWSTR(strings[i])
     result = ReportEventW(handle, type, category, event_id, None, len(strings), raw_data_len, strings_ptr, raw_data)
     if result != 1:
         raise WinError()
@@ -119,9 +109,9 @@ class Win32EventLogHandler(Handler, StringFormatterHandlerMixin):
         self._win32_handle = register_event_source(self._application_name)
 
     def close(self):
-        if self._win32_handle != 0:
+        if self._win32_handle is not None:
             deregister_event_source(self._win32_handle)
-            self._win32_handle = 0
+            self._win32_handle = None
 
     def get_message_id(self, record):
         for dic in (record.extra, record.kwargs):
