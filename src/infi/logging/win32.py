@@ -1,19 +1,18 @@
 import six
 from logbook import Handler, StringFormatterHandlerMixin, NOTSET, DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL
-import ctypes
-from ctypes import c_wchar_p, WinError, windll, wintypes
+from ctypes import c_wchar_p, WinError, windll, wintypes POINTER, Structure
 
 from infi.registry import RegistryValueFactory, LocalComputer
 
 
-class SID_IDENTIFIER_AUTHORITY(ctypes.Structure):
-    _fields_ = [("Value0", wintypes.BYTE), ("Value1", wintypes.BYTE), ("Value2", wintypes.BYTE),
-                ("Value3", wintypes.BYTE), ("Value4", wintypes.BYTE), ("Value5", wintypes.BYTE)]
+class SID_IDENTIFIER_AUTHORITY(Structure):
+    _fields_ = [("byte0", wintypes.BYTE), ("byte1", wintypes.BYTE), ("byte2", wintypes.BYTE),
+                ("byte3", wintypes.BYTE), ("byte4", wintypes.BYTE), ("byte5", wintypes.BYTE)]
 
 
-class SID(ctypes.Structure):
+class SID(Structure):
     _fields_ = [("Revision", wintypes.BYTE), ("SubAuthorityCount", wintypes.BYTE),
-                ("IdentifierAuthority", SID_IDENTIFIER_AUTHORITY), ("SubAuthority", wintypes.POINTER(wintypes.DWORD))]
+                ("IdentifierAuthority", SID_IDENTIFIER_AUTHORITY), ("SubAuthority", POINTER(wintypes.DWORD))]
 
 
 RegisterEventSourceW = windll.advapi32.RegisterEventSourceW
@@ -25,8 +24,8 @@ DeregisterEventSource.argtypes = (wintypes.HANDLE, )
 DeregisterEventSource.restype = wintypes.BOOL
 
 ReportEventW = windll.advapi32.ReportEventW
-ReportEventW.argtypes = (wintypes.HANDLE, wintypes.WORD, wintypes.WORD, wintypes.DWORD, wintypes.POINTER(SID),
-                         wintypes.WORD, wintypes.DWORD, wintypes.POINTER(wintypes.LPCWSTR), wintypes.LPVOID)
+ReportEventW.argtypes = (wintypes.HANDLE, wintypes.WORD, wintypes.WORD, wintypes.DWORD, POINTER(SID),
+                         wintypes.WORD, wintypes.DWORD, POINTER(wintypes.LPCWSTR), wintypes.LPVOID)
 ReportEventW.restype = wintypes.BOOL
 
 # From http://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=VS.85%29.aspx
