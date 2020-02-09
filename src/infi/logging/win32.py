@@ -4,6 +4,7 @@ from ctypes import WinError, windll, wintypes, POINTER
 
 from infi.registry import RegistryValueFactory, LocalComputer
 
+SID = wintypes.LPVOID
 
 RegisterEventSourceW = windll.advapi32.RegisterEventSourceW
 RegisterEventSourceW.argtypes = (wintypes.LPCWSTR, wintypes.LPCWSTR)
@@ -14,7 +15,7 @@ DeregisterEventSource.argtypes = (wintypes.HANDLE, )
 DeregisterEventSource.restype = wintypes.BOOL
 
 ReportEventW = windll.advapi32.ReportEventW
-ReportEventW.argtypes = (wintypes.HANDLE, wintypes.WORD, wintypes.WORD, wintypes.DWORD, wintypes.LPVOID,
+ReportEventW.argtypes = (wintypes.HANDLE, wintypes.WORD, wintypes.WORD, wintypes.DWORD, POINTER(SID),
                          wintypes.WORD, wintypes.DWORD, POINTER(wintypes.LPCWSTR), wintypes.LPVOID)
 ReportEventW.restype = wintypes.BOOL
 
