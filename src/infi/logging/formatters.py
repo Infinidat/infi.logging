@@ -94,5 +94,10 @@ def create_default_formatter(plugin_predicate=_true):
     strformat = " ".join(strformats)
 
     def formatter(record, handler):
-        return strformat.format(*(g(record) for g in getters))
+        items = []
+        for getter in getters:
+            item = getter(record)
+            items.append(item if item is not None else 'None')
+
+        return strformat.format(*items)
     return formatter
